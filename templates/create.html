@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Create New Ticket</h1>
+
+    <!-- Success message shown after ticket is created -->
+    <div id="successMsg" class="hidden bg-green-100 text-green-700 px-4 py-3 rounded mb-4">
+        Ticket created successfully! <span id="newTicketId" class="font-bold"></span>
+        <a href="/" class="underline ml-2">Go back to list</a>
+    </div>
+
+    <!-- Error message shown if something goes wrong -->
+    <div id="errorMsg" class="hidden bg-red-100 text-red-700 px-4 py-3 rounded mb-4">
+        Something went wrong. Please try again.
+    </div>
+
+    <div class="bg-white rounded shadow p-6">
+        <form id="createForm" class="space-y-4">
+
+            <!-- Customer name field -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                <input
+                    type="text"
+                    name="customer_name"
+                    required
+                    class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="John Doe"
+                />
+            </div>
+
+            <!-- Customer email field -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                <input
+                    type="email"
+                    name="customer_email"
+                    required
+                    class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="john@example.com"
+                />
+            </div>
+
+            <!-- Issue subject field -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input
+                    type="text"
+                    name="subject"
+                    required
+                    class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="Brief description of the issue"
+                />
+            </div>
+
+            <!-- Issue description field -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                    name="description"
+                    required
+                    rows="4"
+                    class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="Describe the issue in detail..."
+                ></textarea>
+            </div>
+
+            <!-- Submit button -->
+            <button
+                type="submit"
+                class="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700"
+            >
+                Create Ticket
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    // Handle form submission
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        // Collect form data
+        const formData = new FormData(this);
+        const data = {
+            customer_name: formData.get("customer_name"),
+            customer_email: formData.get("customer_email"),
+            subject: formData.get("subject"),
+            description: formData.get("description")
+        };
+
+        // Send POST request to API
+        const response = await fetch("/api/tickets/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            // Show success message with the new ticket ID
+            document.getElementById("newTicketId").textContent = result.ticket_id;
+            document.getElementById("successMsg").classList.remove("hidden");
+            document.getElementById("createForm").reset();
+        } else {
+            document.getElementById("errorMsg").classList.remove("hidden");
+        }
+    });
+</script>
+
+{% endblock %}

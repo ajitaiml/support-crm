@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Ticket details are loaded here by JavaScript -->
+<div id="ticketDetail" class="space-y-6">
+    <p class="text-gray-500">Loading ticket...</p>
+</div>
+
+<script>
+    // Get the ticket ID from the current URL
+    const ticketId = "{{ ticket_id }}";
+
+    // Fetch full ticket details from API
+    async function loadTicket() {
+        const response = await fetch(`/api/tickets/${ticketId}`);
+
+        if (!response.ok) {
+            document.getElementById("ticketDetail").innerHTML = `
+                <p class="text-red-500">Ticket not found.</p>
+            `;
+            return;
+        }
+
+        const ticket = await response.json();
+        renderTicket(ticket);
+    }
+
+    // Renders the full ticket detail page
+    function renderTicket(ticket) {
+        const statusColors = {
+            "Open": "bg-green-100 text-green-700",
+            "In Progress": "bg-yellow-100 text-yellow-700",
+            "Closed": "bg-red-100 text-red-700"
+        };
+        const badgeColor = statusColors[ticket.status] || "bg-gray-100 text-gray-700";
+
+        document.getElementById("ticketDetail").innerHTML = `
+            <!-- Ticket header -->
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">${ticket.subject}</h1>
+                    <p class="text-gray-500 text-sm mt-1">Ticket ID: <span class="font-mono text-blue-600">${ticket.ticket_id}</span></p>
+                </div>
+                <span class="px-3 py-1 rounded text-sm font-semibold ${badgeColor}">${ticket.status}</span>
+            </div>
+
+            <!-- Customer info and description -->
+            <div class="bg-white rounded shadow p-6 space-y-3">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Customer Name</p>
+                        <p class="font-medium">${ticket.customer_name}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Customer Email</p>
+                        <p class="font-medium">${ticket.customer_email}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Created At</p>
+                        <p class="font-medium">${new Date(ticket.created_at).toLocaleString("en-IN")}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Last Updated</p>
+                        <p class="font-medium">${new Date(ticket.updated_at).toLocaleString("en-IN")}</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase mb-1">Description</p>
+                    <p class="text-gray-700">${ticket.description}</p>
+                </div>
+            </div>
+
+            <!-- Update status and add note form -->
+            <div class="bg-white rounded shadow p-6 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-800">Update Ticket</h2>
+
+                <!-- Success message -->
+                <div id="updateSuccess" class="hidden bg-green-100 text-green-700 px-4 py-2 rounded">
+                    Ticket updated successfully.
+                </div>
+
+                <!-- Status dropdown -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
+                    <select id="statusSelect" class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="Open" ${ticket.status === "Open" ? "selected" : ""}>Open</option>
+                        <option value="In Progress" ${ticket.status === "In Progress" ? "selected" : ""}>In Progress</option>
+                        <option value="Closed" ${ticket.status === "Closed" ? "selected" : ""}>Closed</option>
+                    </select>
+                </div>
+
+                <!-- Add note textarea -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Add a Note</label>
+                    <textarea
+                        id="noteInput"
+                        rows="3"
+                        class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        placeholder="Write an internal note..."
+                    ></textarea>
+                </div>
+
+                <!-- Update button -->
+                <button
+                    onclick="updateTicket()"
+                    class="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700"
+                >
+                    Update Ticket
+                </button>
+            </div>
+
+            <!-- Notes section -->
+            <div class="bg-white rounded shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Notes</h2>
+                <div id="notesList" class="space-y-3">
+                    ${ticket.notes.length === 0
+                        ? '<p class="text-gray-400">No notes yet.</p>'
+                        : ticket.notes.map(note => `
+                            <div class="border-l-4 border-blue-400 pl-4 py-1">
+                                <p class="text-gray-700">${note.note_text}</p>
+                                <p class="text-xs text-gray-400 mt-1">${new Date(note.created_at).toLocaleString("en-IN")}</p>
+                            </div>
+                        `).join("")
+                    }
+                </div>
+            </div>
+        `;
+    }
+
+    // Sends PUT request to update status and/or add a note
+    async function updateTicket() {
+        const status = document.getElementById("statusSelect").value;
+        const note_text = document.getElementById("noteInput").value;
+
+        const response = await fetch(`/api/tickets/${ticketId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status, note_text })
+        });
+
+        if (response.ok) {
+            // Reload ticket to show updated data and new note
+            loadTicket();
+            document.getElementById("updateSuccess").classList.remove("hidden");
+        }
+    }
+
+    // Load ticket when page opens
+    loadTicket();
+</script>
+
+{% endblock %}
