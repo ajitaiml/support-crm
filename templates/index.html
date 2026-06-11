@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">All Tickets</h1>
+
+    <!-- Search and filter bar -->
+    <div class="flex flex-col md:flex-row gap-4 mb-4">
+
+        <!-- Search input - fetches results as user types -->
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by name, email, ID or description..."
+            class="flex-1 border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+
+        <!-- Status filter buttons -->
+        <div class="flex gap-2">
+            <button onclick="filterByStatus('')" class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">All</button>
+            <button onclick="filterByStatus('Open')" class="filter-btn bg-green-100 text-green-700 px-4 py-2 rounded hover:bg-green-200">Open</button>
+            <button onclick="filterByStatus('In Progress')" class="filter-btn bg-yellow-100 text-yellow-700 px-4 py-2 rounded hover:bg-yellow-200">In Progress</button>
+            <button onclick="filterByStatus('Closed')" class="filter-btn bg-red-100 text-red-700 px-4 py-2 rounded hover:bg-red-200">Closed</button>
+        </div>
+    </div>
+
+    <!-- Ticket table -->
+    <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-3">Ticket ID</th>
+                    <th class="px-4 py-3">Customer</th>
+                    <th class="px-4 py-3">Subject</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Created</th>
+                    <th class="px-4 py-3">Action</th>
+                </tr>
+            </thead>
+            <!-- Rows are injected here by JavaScript -->
+            <tbody id="ticketTableBody" class="divide-y divide-gray-100">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Shown when no tickets match search or filter -->
+    <div id="noResults" class="hidden text-center text-gray-500 py-10">
+        No tickets found.
+    </div>
+</div>
+
+<script>
+    // Tracks current search and filter values
+    let currentSearch = "";
+    let currentStatus = "";
+
+    // Fetch tickets from API and render them in the table
+    async function fetchTickets(search = "", status = "") {
+        // Build the query string based on search and status
+        let url = `/api/tickets?search=${search}&status=${status}`;
+        const response = await fetch(url);
+        const tickets = await response.json();
+
+        const tbody = document.getElementById("ticketTableBody");
+        const noResults = document.getElementById("noResults");
+
+        // Clear existing rows
+        tbody.innerHTML = "";
+
+        if (tickets.length === 0) {
+            noResults.classList.remove("hidden");
+            return;
+        }
+
+        noResults.classList.add("hidden");
+
+        // Render each ticket as a table row
+        tickets.forEach(ticket => {
+            const row = document.createElement("tr");
+            row.className = "hover:bg-gray-50 cursor-pointer";
+            row.innerHTML = `
+                <td class="px-4 py-3 font-mono text-blue-600">${ticket.ticket_id}</td>
+                <td class="px-4 py-3">${ticket.customer_name}</td>
+                <td class="px-4 py-3">${ticket.subject}</td>
+                <td class="px-4 py-3">${getStatusBadge(ticket.status)}</td>
+                <td class="px-4 py-3 text-gray-500">${formatDate(ticket.created_at)}</td>
+                <td class="px-4 py-3">
+                    <a href="/ticket/${ticket.ticket_id}" class="text-blue-600 hover:underline">View</a>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Returns colored badge based on ticket status
+    function getStatusBadge(status) {
+        const colors = {
+            "Open": "bg-green-100 text-green-700",
+            "In Progress": "bg-yellow-100 text-yellow-700",
+            "Closed": "bg-red-100 text-red-700"
+        };
+        const color = colors[status] || "bg-gray-100 text-gray-700";
+        return `<span class="px-2 py-1 rounded text-xs font-semibold ${color}">${status}</span>`;
+    }
+
+    // Formats ISO date string to readable format
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit", month: "short", year: "numeric"
+        });
+    }
+
+    // Called when filter buttons are clicked
+    function filterByStatus(status) {
+        currentStatus = status;
+        fetchTickets(currentSearch, currentStatus);
+    }
+
+    // Search as user types - waits 300ms after last keystroke before fetching
+    document.getElementById("searchInput").addEventListener("input", function () {
+        currentSearch = this.value;
+        clearTimeout(this.searchTimer);
+        this.searchTimer = setTimeout(() => {
+            fetchTickets(currentSearch, currentStatus);
+        }, 300);
+    });
+
+    // Load all tickets when page first opens
+    fetchTickets();
+</script>
+
+{% endblock %}
