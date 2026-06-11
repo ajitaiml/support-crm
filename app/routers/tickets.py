@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/tickets",tags=["tickets"])
 
 @router.post("/")
 def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db)):
-    new_ticket = crud.create_ticket_db(db,ticket)
+    new_ticket = crud.create_ticket(db, ticket)
     return {
         "ticket_id": new_ticket.ticket_id,
         "created_at": new_ticket.created_at

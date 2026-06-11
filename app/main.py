@@ -12,22 +12,23 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static",StaticFiles(directory="static"),name="static")
 app.include_router(tickets.router)
 
-# Home Page
+# Home page - renders the ticket list page
 @app.get("/")
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
-# Create ticket page 
+# Create ticket page - renders the create ticket form
 @app.get("/create")
 def create_page(request: Request):
-    return templates.TemplateResponse("create.html", {"request": request})
+    return templates.TemplateResponse(request, "create.html")
 
 
-# Ticket detail page 
+# Ticket detail page - renders the detail page for a specific ticket
 @app.get("/ticket/{ticket_id}")
 def detail_page(request: Request, ticket_id: str):
     return templates.TemplateResponse(
+        request,
         "detail.html",
-        {"request": request, "ticket_id": ticket_id}
+        {"ticket_id": ticket_id}
     )
