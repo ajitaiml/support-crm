@@ -27,7 +27,7 @@ class TicketCreate(BaseModel):
     
     
 # Schema to update a ticket
-class UpdateTicket(BaseModel):
+class TicketUpdate(BaseModel):
     status: Optional[str] = None
     note_text: Optional[str] = None
     
