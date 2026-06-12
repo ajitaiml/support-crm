@@ -1,8 +1,10 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite:///./crm.db"
+# Use /data/crm.db on Railway (production) and ./crm.db locally
+DATABASE_URL = "sqlite:////data/crm.db" if os.path.exists("/data") else "sqlite:///./crm.db"
 
 engine = create_engine(
     DATABASE_URL, connect_args={"check_same_thread": False}
