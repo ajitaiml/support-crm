@@ -56,41 +56,47 @@
     let currentStatus = "";
 
     // Fetch tickets from API and render them in the table
+    // Uses window.location.origin to always match the current protocol (http or https)
     async function fetchTickets(search = "", status = "") {
-        // Build the query string based on search and status
-        let url = `/api/tickets?search=${search}&status=${status}`;
-        const response = await fetch(url);
-        const tickets = await response.json();
+        const base = window.location.origin;
+        const url = `${base}/api/tickets/?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`;
+        
+        try {
+            const response = await fetch(url);
+            const tickets = await response.json();
 
-        const tbody = document.getElementById("ticketTableBody");
-        const noResults = document.getElementById("noResults");
+            const tbody = document.getElementById("ticketTableBody");
+            const noResults = document.getElementById("noResults");
 
-        // Clear existing rows
-        tbody.innerHTML = "";
+            // Clear existing rows
+            tbody.innerHTML = "";
 
-        if (tickets.length === 0) {
-            noResults.classList.remove("hidden");
-            return;
+            if (tickets.length === 0) {
+                noResults.classList.remove("hidden");
+                return;
+            }
+
+            noResults.classList.add("hidden");
+
+            // Render each ticket as a table row
+            tickets.forEach(ticket => {
+                const row = document.createElement("tr");
+                row.className = "hover:bg-gray-50 cursor-pointer";
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-mono text-blue-600">${ticket.ticket_id}</td>
+                    <td class="px-4 py-3">${ticket.customer_name}</td>
+                    <td class="px-4 py-3">${ticket.subject}</td>
+                    <td class="px-4 py-3">${getStatusBadge(ticket.status)}</td>
+                    <td class="px-4 py-3 text-gray-500">${formatDate(ticket.created_at)}</td>
+                    <td class="px-4 py-3">
+                        <a href="/ticket/${ticket.ticket_id}" class="text-blue-600 hover:underline">View</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (err) {
+            console.error("Failed to fetch tickets:", err);
         }
-
-        noResults.classList.add("hidden");
-
-        // Render each ticket as a table row
-        tickets.forEach(ticket => {
-            const row = document.createElement("tr");
-            row.className = "hover:bg-gray-50 cursor-pointer";
-            row.innerHTML = `
-                <td class="px-4 py-3 font-mono text-blue-600">${ticket.ticket_id}</td>
-                <td class="px-4 py-3">${ticket.customer_name}</td>
-                <td class="px-4 py-3">${ticket.subject}</td>
-                <td class="px-4 py-3">${getStatusBadge(ticket.status)}</td>
-                <td class="px-4 py-3 text-gray-500">${formatDate(ticket.created_at)}</td>
-                <td class="px-4 py-3">
-                    <a href="/ticket/${ticket.ticket_id}" class="text-blue-600 hover:underline">View</a>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
     }
 
     // Returns colored badge based on ticket status
