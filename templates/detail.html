@@ -58,11 +58,11 @@
                     </div>
                     <div>
                         <p class="text-xs text-gray-500 uppercase">Created At</p>
-                        <p class="font-medium">${new Date(ticket.created_at).toLocaleString("en-IN")}</p>
+                        <p class="font-medium">${new Date(ticket.created_at + "Z").toLocaleString("en-IN", {timeZone: "Asia/Kolkata"})}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-500 uppercase">Last Updated</p>
-                        <p class="font-medium">${new Date(ticket.updated_at).toLocaleString("en-IN")}</p>
+                        <p class="font-medium">${new Date(ticket.updated_at + "Z").toLocaleString("en-IN", {timeZone: "Asia/Kolkata"})}</p>
                     </div>
                 </div>
                 <div>
@@ -119,7 +119,7 @@
                         : ticket.notes.map(note => `
                             <div class="border-l-4 border-blue-400 pl-4 py-1">
                                 <p class="text-gray-700">${note.note_text}</p>
-                                <p class="text-xs text-gray-400 mt-1">${new Date(note.created_at).toLocaleString("en-IN")}</p>
+                                <p class="text-xs text-gray-400 mt-1">${new Date(note.created_at + "Z").toLocaleString("en-IN", {timeZone: "Asia/Kolkata"})}</p>
                             </div>
                         `).join("")
                     }
